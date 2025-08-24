@@ -121,7 +121,11 @@ const Login = ({ onOpenAccount }: LoginProps) => {
               <Avatar
                 shape="square"
                 size={20}
-                style={{ background: "#1890ff", fontWeight: "bold" }}
+                style={{
+                  background: "#1890ff",
+                  fontWeight: "bold",
+                  cursor: "pointer",
+                }}
               >
                 F
               </Avatar>
@@ -143,18 +147,19 @@ const Login = ({ onOpenAccount }: LoginProps) => {
             <Space size={8}>
               {profile ? (
                 <Avatar
-                  size={28}
+                  size={30}
                   src={profile.picture}
                   icon={<UserOutlined />}
                   onClick={onOpenAccount}
+                  style={{ cursor: "pointer" }}
                 />
               ) : (
                 <Avatar size={28} icon={<UserOutlined />} />
               )}
-              <CloseOutlined
+              {/* <CloseOutlined
                 style={{ fontSize: "16px", cursor: "pointer" }}
                 onClick={() => window.close()}
-              />
+              /> */}
             </Space>
           </Col>
         </Row>

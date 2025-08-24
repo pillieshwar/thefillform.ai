@@ -1,11 +1,24 @@
+/* 1. Register ZonaProFont */
+@font-face {
+  font-family: "ZonaProFont";
+  src: url("./assets/fonts/ZonaProFont.woff2") format("woff2"),
+    url("./assets/fonts/ZonaProFont.woff") format("woff"),
+    url("./assets/fonts/ZonaProFont.ttf") format("truetype");
+  font-weight: 500;
+  font-style: normal;
+  font-display: swap;
+}
+
+/* 2. Global root styles */
 :root {
-  font-family: Inter, system-ui, Avenir, Helvetica, Arial, sans-serif;
+  font-family: "ZonaProFont", "ZonaProFont Fallback", Arial, sans-serif;
+  font-weight: 500;
+  font-style: normal;
   line-height: 1.5;
-  font-weight: 400;
 
   color-scheme: light dark;
-  color: rgba(255, 255, 255, 0.87);
-  background-color: #242424;
+  color: rgb(3, 3, 15); /* dark text by default */
+  background-color: #ffffff; /* light background by default */
 
   font-synthesis: none;
   text-rendering: optimizeLegibility;
@@ -13,7 +26,6 @@
   -moz-osx-font-smoothing: grayscale;
   -webkit-text-size-adjust: 100%;
 }
-
 a {
   font-weight: 500;
   color: #646cff;
@@ -27,7 +39,7 @@ body {
   margin: 0;
   display: inline-table;
   place-items: center;
-  min-width: 320px;
+  min-width: 380px;
   min-height: 100vh;
 }
 
