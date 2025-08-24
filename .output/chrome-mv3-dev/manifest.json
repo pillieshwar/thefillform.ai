@@ -10,6 +10,20 @@
     "96": "icon/96.png",
     "128": "icon/128.png"
   },
+  "permissions": [
+    "identity",
+    "storage",
+    "tabs",
+    "scripting"
+  ],
+  "oauth2": {
+    "client_id": "6bj9qs4trivcf0h1u2kfnm4n1j.apps.googleusercontent.com",
+    "scopes": [
+      "openid",
+      "email",
+      "profile"
+    ]
+  },
   "commands": {
     "wxt:reload-extension": {
       "description": "Reload the extension during development",
@@ -32,9 +46,5 @@
   "content_security_policy": {
     "extension_pages": "script-src 'self' 'wasm-unsafe-eval' http://localhost:3000; object-src 'self';",
     "sandbox": "script-src 'self' 'unsafe-inline' 'unsafe-eval' http://localhost:3000; sandbox allow-scripts allow-forms allow-popups allow-modals; child-src 'self';"
-  },
-  "permissions": [
-    "tabs",
-    "scripting"
-  ]
+  }
 }

@@ -3,4 +3,11 @@ import { defineConfig } from "wxt";
 // See https://wxt.dev/api/config.html
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
+  manifest: {
+    permissions: ["identity", "storage"],
+    oauth2: {
+      client_id: "6bj9qs4trivcf0h1u2kfnm4n1j.apps.googleusercontent.com", // if using Google directly
+      scopes: ["openid", "email", "profile"],
+    },
+  },
 });

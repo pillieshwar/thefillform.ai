@@ -1,16 +1,15 @@
-import { useState } from "react";
-import reactLogo from "@/assets/react.svg";
-import wxtLogo from "/wxt.svg";
+import { AUTH_CONFIG } from "@/src/config/auth-config";
+import Login from "@/src/pages/Login";
+import { Amplify } from "aws-amplify";
 import "./App.css";
-import RecordContainer from "@/src/record/RecordContainer";
 
+Amplify.configure(AUTH_CONFIG);
 function App() {
-  const [count, setCount] = useState(0);
-
   return (
     <>
       <h1>WXT + React</h1>
-      <RecordContainer />
+      {/* <RecordContainer /> */}
+      <Login />
     </>
   );
 }
