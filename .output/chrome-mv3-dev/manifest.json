@@ -13,6 +13,7 @@
   "permissions": [
     "identity",
     "storage",
+    "microphone",
     "tabs",
     "scripting"
   ],

@@ -19,6 +19,7 @@ import {
 import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { sampleData } from "../utils/testData";
+import VoiceRecorder from "./VoiceRecorder";
 
 const { Title, Text } = Typography;
 const { Header, Content } = Layout;
@@ -69,33 +70,52 @@ const Login = ({ onOpenAccount }: LoginProps) => {
       }
     });
   };
+  const [loading, setLoading] = useState(false);
 
   const handleApiCall = async () => {
-    (chrome || browser).storage.local.get("tokens", async (result) => {
-      const tokens = result.tokens;
-      if (!tokens?.idToken) {
-        console.error("No token found. Please log in first.");
-        return;
-      }
+    (chrome || browser).storage.local.get(
+      ["tokens", "recordedAudio"],
+      async (result) => {
+        const tokens = result.tokens;
+        const audioBase64 = result.recordedAudio;
 
-      try {
-        const res = await fetch(
-          "https://980oelzvbi.execute-api.us-east-1.amazonaws.com/prod/voice",
-          {
-            method: "POST",
-            headers: {
-              "Content-Type": "application/json",
-              Authorization: `Bearer ${tokens.idToken}`,
-            },
-            body: JSON.stringify(sampleData),
-          }
-        );
-        const data = await res.json();
-        console.log("API response:", data);
-      } catch (err) {
-        console.error("API call failed:", err);
+        if (!tokens?.idToken) {
+          console.error("No token found. Please log in first.");
+          return;
+        }
+        if (!audioBase64) {
+          console.error("No recorded audio found.");
+          return;
+        }
+        try {
+          setLoading(true); // ⏳ disable + show spinner
+          const res = await fetch(
+            "https://980oelzvbi.execute-api.us-east-1.amazonaws.com/prod/voice",
+            {
+              method: "POST",
+              headers: {
+                "Content-Type": "application/json",
+                Authorization: `Bearer ${tokens.idToken}`,
+              },
+              body: JSON.stringify({
+                audio: audioBase64, // 👈 send audio here
+                uiSchema: [
+                  { id: "name", type: "text", label: "Full Name" },
+                  { id: "email", type: "email", label: "Email" },
+                  { id: "password", type: "password", label: "Password" },
+                ],
+              }),
+            }
+          );
+          const data = await res.json();
+          console.log("API response:", data);
+        } catch (err) {
+          console.error("API call failed:", err);
+        } finally {
+          setLoading(false); // ✅ re-enable when finished
+        }
       }
-    });
+    );
   };
 
   return (
@@ -174,42 +194,11 @@ const Login = ({ onOpenAccount }: LoginProps) => {
                   ),
                   children: (
                     <div style={{ textAlign: "center", marginTop: "1rem" }}>
+                      <VoiceRecorder />
+
                       <Text type="secondary">
                         Speak your form data naturally
                       </Text>
-                      <div style={{ marginTop: "1rem" }}>
-                        <div
-                          style={{ textAlign: "center", marginTop: "1.5rem" }}
-                        >
-                          <Button
-                            type="primary"
-                            shape="circle"
-                            size="small"
-                            icon={
-                              <AudioOutlined style={{ fontSize: "14px" }} />
-                            }
-                            style={{
-                              background: "red",
-                              borderColor: "red",
-                              width: "34px",
-                              height: "34px",
-                            }}
-                          />
-                          <div style={{ marginTop: "0.75rem" }}>
-                            <Text type="secondary">Tap to start recording</Text>
-                          </div>
-                        </div>
-
-                        {/* <Button
-                          type="primary"
-                          style={{
-                            background: "#854ee0",
-                            borderColor: "#854ee0",
-                          }}
-                        >
-                          Start Recording
-                        </Button> */}
-                      </div>
                     </div>
                   ),
                 },
@@ -249,6 +238,7 @@ const Login = ({ onOpenAccount }: LoginProps) => {
                 type="primary"
                 icon={<CloudServerOutlined />}
                 onClick={handleApiCall}
+                loading={loading} // ⏳ shows spinner + disables button
                 style={{
                   background: "#854ee0",
                   borderColor: "#854ee0",
