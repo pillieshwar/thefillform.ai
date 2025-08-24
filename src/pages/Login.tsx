@@ -5,7 +5,9 @@ import {
   UserOutlined,
   GoogleOutlined,
   LogoutOutlined,
+  CloudServerOutlined,
 } from "@ant-design/icons";
+import { sampleData } from "../utils/testData";
 
 const { Title, Text } = Typography;
 
@@ -42,6 +44,35 @@ const Login = () => {
   const handleLogout = () => {
     setUser(null);
     setProfile(null);
+  };
+
+  const handleApiCall = async () => {
+    (chrome || browser).storage.local.get("tokens", async (result) => {
+      const tokens = result.tokens;
+      if (!tokens?.idToken) {
+        console.error("No token found. Please log in first.");
+        return;
+      }
+
+      try {
+        const res = await fetch(
+          "https://980oelzvbi.execute-api.us-east-1.amazonaws.com/prod/voice", // 👈 replace with your API Gateway endpoint
+          {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+              Authorization: `Bearer ${tokens.idToken}`,
+            },
+            body: JSON.stringify(sampleData),
+          }
+        );
+
+        const data = await res.json();
+        console.log("API response:", data);
+      } catch (err) {
+        console.error("API call failed:", err);
+      }
+    });
   };
 
   return (
@@ -82,10 +113,19 @@ const Login = () => {
               </Text>
             </div>
           )}
+          <Space direction="vertical" style={{ width: "100%" }}>
+            <Button danger icon={<LogoutOutlined />} onClick={handleLogout}>
+              Sign out
+            </Button>
 
-          <Button danger icon={<LogoutOutlined />} onClick={handleLogout}>
-            Sign out
-          </Button>
+            <Button
+              type="primary"
+              icon={<CloudServerOutlined />}
+              onClick={handleApiCall}
+            >
+              Make API Call
+            </Button>
+          </Space>
         </>
       ) : (
         <Button
