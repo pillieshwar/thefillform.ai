@@ -1,22 +1,23 @@
-import { useState } from "react";
-import { jwtDecode } from "jwt-decode";
 import {
-  Button,
+  AudioOutlined,
+  CloudServerOutlined,
+  FilePdfOutlined,
+  GoogleOutlined,
+  UserOutlined,
+} from "@ant-design/icons";
+import {
   Avatar,
-  Typography,
-  Space,
+  Button,
+  Col,
   Layout,
   Row,
-  Col,
+  Space,
+  Typography,
+  Tabs,
   Divider,
 } from "antd";
-import {
-  UserOutlined,
-  GoogleOutlined,
-  LogoutOutlined,
-  CloudServerOutlined,
-  CloseOutlined,
-} from "@ant-design/icons";
+import { jwtDecode } from "jwt-decode";
+import { useEffect, useState } from "react";
 import { sampleData } from "../utils/testData";
 
 const { Title, Text } = Typography;
@@ -36,7 +37,7 @@ const Login = ({ onOpenAccount }: LoginProps) => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<IdTokenPayload | null>(null);
 
-  // 🔹 Load saved tokens/profile when popup opens
+  // Load saved tokens/profile
   useEffect(() => {
     (chrome || browser).storage.local.get(["tokens", "profile"], (result) => {
       if (result.tokens?.idToken && result.profile) {
@@ -58,7 +59,6 @@ const Login = ({ onOpenAccount }: LoginProps) => {
         try {
           const decoded: IdTokenPayload = jwtDecode(response.idToken);
           setProfile(decoded);
-          // ✅ Save to local storage for persistence
           (chrome || browser).storage.local.set({
             tokens: response,
             profile: decoded,
@@ -68,11 +68,6 @@ const Login = ({ onOpenAccount }: LoginProps) => {
         }
       }
     });
-  };
-
-  const handleLogout = () => {
-    setUser(null);
-    setProfile(null);
   };
 
   const handleApiCall = async () => {
@@ -85,7 +80,7 @@ const Login = ({ onOpenAccount }: LoginProps) => {
 
       try {
         const res = await fetch(
-          "https://980oelzvbi.execute-api.us-east-1.amazonaws.com/prod/voice", // replace with your API Gateway endpoint
+          "https://980oelzvbi.execute-api.us-east-1.amazonaws.com/prod/voice",
           {
             method: "POST",
             headers: {
@@ -95,7 +90,6 @@ const Login = ({ onOpenAccount }: LoginProps) => {
             body: JSON.stringify(sampleData),
           }
         );
-
         const data = await res.json();
         console.log("API response:", data);
       } catch (err) {
@@ -106,26 +100,21 @@ const Login = ({ onOpenAccount }: LoginProps) => {
 
   return (
     <Layout style={{ minHeight: "50vh", background: "#fff" }}>
-      {/* 🔹 Header */}
+      {/* Header */}
       <Header
         style={{
           background: "#fff",
-          padding: "0.5rem 1rem", // reduced padding
+          padding: "0.5rem 1rem",
           borderBottom: "1px solid #f0f0f0",
         }}
       >
         <Row align="middle" justify="space-between">
-          {/* Left: Logo + Extension name */}
           <Col>
             <Space align="center" size={8}>
               <Avatar
                 shape="square"
                 size={20}
-                style={{
-                  background: "#1890ff",
-                  fontWeight: "bold",
-                  cursor: "pointer",
-                }}
+                style={{ background: "#854ee0" }}
               >
                 F
               </Avatar>
@@ -141,8 +130,6 @@ const Login = ({ onOpenAccount }: LoginProps) => {
               </Title>
             </Space>
           </Col>
-
-          {/* Right: Profile avatar + Close */}
           <Col>
             <Space size={8}>
               {profile ? (
@@ -156,47 +143,120 @@ const Login = ({ onOpenAccount }: LoginProps) => {
               ) : (
                 <Avatar size={28} icon={<UserOutlined />} />
               )}
-              {/* <CloseOutlined
-                style={{ fontSize: "16px", cursor: "pointer" }}
-                onClick={() => window.close()}
-              /> */}
             </Space>
           </Col>
         </Row>
       </Header>
 
-      {/* 🔹 Main Content */}
-      <Content style={{ padding: "1rem", textAlign: "center" }}>
-        {" "}
-        {/* reduced */}
+      {/* Main Content */}
+      <Content style={{ padding: "1.5rem", textAlign: "center" }}>
         {user ? (
           <>
-            <Title level={5} style={{ marginBottom: "0.75rem" }}>
-              Welcome {profile?.given_name || "User"}!
+            <Title level={4} style={{ marginBottom: "0.25rem" }}>
+              Welcome back, {profile?.given_name || "User"}!
             </Title>
-            {profile && (
-              <div style={{ marginBottom: "1rem" }}>
-                <Text>Email: {profile.email}</Text>
-                <br />
-                <Text>
-                  Name: {profile.given_name} {profile.family_name}
-                </Text>
-              </div>
-            )}
-            <Divider style={{ margin: "1rem 0" }} /> {/* tighter */}
-            <Space direction="vertical" style={{ width: "100%" }} size="middle">
-              <Button danger icon={<LogoutOutlined />} onClick={handleLogout}>
-                Sign out
-              </Button>
+            <Text type="secondary">
+              Choose how you want to fill forms today
+            </Text>
 
+            {/* Tabs for Voice / PDF */}
+            <Tabs
+              defaultActiveKey="voice"
+              style={{ marginTop: "1.5rem" }}
+              className="custom-tabs"
+              items={[
+                {
+                  key: "voice",
+                  label: (
+                    <Space>
+                      <AudioOutlined /> Voice Recording
+                    </Space>
+                  ),
+                  children: (
+                    <div style={{ textAlign: "center", marginTop: "1rem" }}>
+                      <Text type="secondary">
+                        Speak your form data naturally
+                      </Text>
+                      <div style={{ marginTop: "1rem" }}>
+                        <div
+                          style={{ textAlign: "center", marginTop: "1.5rem" }}
+                        >
+                          <Button
+                            type="primary"
+                            shape="circle"
+                            size="small"
+                            icon={
+                              <AudioOutlined style={{ fontSize: "14px" }} />
+                            }
+                            style={{
+                              background: "red",
+                              borderColor: "red",
+                              width: "34px",
+                              height: "34px",
+                            }}
+                          />
+                          <div style={{ marginTop: "0.75rem" }}>
+                            <Text type="secondary">Tap to start recording</Text>
+                          </div>
+                        </div>
+
+                        {/* <Button
+                          type="primary"
+                          style={{
+                            background: "#854ee0",
+                            borderColor: "#854ee0",
+                          }}
+                        >
+                          Start Recording
+                        </Button> */}
+                      </div>
+                    </div>
+                  ),
+                },
+                {
+                  key: "pdf",
+                  label: (
+                    <Space>
+                      <FilePdfOutlined /> PDF Upload
+                    </Space>
+                  ),
+                  children: (
+                    <div style={{ textAlign: "center", marginTop: "1rem" }}>
+                      <Text type="secondary">
+                        Extract data from your PDF documents
+                      </Text>
+                      <div style={{ marginTop: "1rem" }}>
+                        <Button
+                          style={{
+                            background: "#854ee0",
+                            borderColor: "#854ee0",
+                            color: "#fff",
+                          }}
+                        >
+                          Choose PDF
+                        </Button>
+                      </div>
+                    </div>
+                  ),
+                },
+              ]}
+            />
+
+            <Divider />
+            {/* Example API Call button */}
+            <div style={{ marginTop: "1.5rem" }}>
               <Button
                 type="primary"
                 icon={<CloudServerOutlined />}
                 onClick={handleApiCall}
+                style={{
+                  background: "#854ee0",
+                  borderColor: "#854ee0",
+                }}
               >
-                Make API Call
+                Fill
               </Button>
-            </Space>
+            </div>
           </>
         ) : (
           <Button
@@ -205,9 +265,9 @@ const Login = ({ onOpenAccount }: LoginProps) => {
             size="middle"
             onClick={handleLogin}
             style={{
-              background: "#4285F4",
-              borderColor: "#4285F4",
-              padding: "0 1.25rem", // smaller button padding
+              background: "#854ee0",
+              borderColor: "#854ee0",
+              padding: "0 1.25rem",
               fontWeight: 500,
             }}
           >

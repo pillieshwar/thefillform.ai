@@ -53,7 +53,7 @@ const AccountSettings = ({ onBack }: AccountSettingsProps) => {
   };
 
   const handleBilling = () => {
-    window.open("https://your-billing-website.com", "_blank"); // replace with your billing page
+    window.open("https://docswell-ai.lovable.app/", "_blank"); // replace with your billing page
   };
 
   return (
@@ -106,7 +106,7 @@ const AccountSettings = ({ onBack }: AccountSettingsProps) => {
           <Col span={12}>
             <Card>
               <Statistic
-                title="Total Forms Filled"
+                title="Forms Filled"
                 value={1128}
                 prefix={<FileDoneOutlined />}
               />
@@ -114,7 +114,7 @@ const AccountSettings = ({ onBack }: AccountSettingsProps) => {
           </Col>
           <Col span={12}>
             <Card>
-              <Statistic title="Credits Remaining" value={93} suffix="/ 100" />
+              <Statistic title="Credits Available" value={93} suffix="/ 100" />
             </Card>
           </Col>
         </Row>
