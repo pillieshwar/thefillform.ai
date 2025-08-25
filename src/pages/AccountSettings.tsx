@@ -31,19 +31,49 @@ interface IdTokenPayload {
   picture?: string;
 }
 
+interface AnalyticsData {
+  creditsUsed: number;
+  creditsRemaining: number;
+  formsFilled: number;
+  month: string;
+}
+
 interface AccountSettingsProps {
   onBack: () => void;
 }
 
 const AccountSettings = ({ onBack }: AccountSettingsProps) => {
   const [profile, setProfile] = useState<IdTokenPayload | null>(null);
+  const [analytics, setAnalytics] = useState<AnalyticsData | null>(null);
 
+  // 🔹 Load profile from local storage
   useEffect(() => {
-    (chrome || browser).storage.local.get("profile", (result) => {
-      if (result.profile) {
-        setProfile(result.profile);
+    (chrome || browser).storage.local.get(
+      ["profile", "tokens"],
+      async (result) => {
+        if (result.profile) {
+          setProfile(result.profile);
+        }
+
+        if (result.tokens?.idToken) {
+          try {
+            const res = await fetch(
+              "https://980oelzvbi.execute-api.us-east-1.amazonaws.com/prod/analytics",
+              {
+                method: "GET",
+                headers: {
+                  Authorization: `Bearer ${result.tokens.idToken}`,
+                },
+              }
+            );
+            const data = await res.json();
+            setAnalytics(data);
+          } catch (err) {
+            console.error("Failed to fetch analytics:", err);
+          }
+        }
       }
-    });
+    );
   }, []);
 
   const handleLogout = () => {
@@ -107,14 +137,20 @@ const AccountSettings = ({ onBack }: AccountSettingsProps) => {
             <Card>
               <Statistic
                 title="Forms Filled"
-                value={1128}
+                value={analytics ? analytics.formsFilled : 0}
                 prefix={<FileDoneOutlined />}
               />
             </Card>
           </Col>
           <Col span={12}>
             <Card>
-              <Statistic title="Credits Available" value={93} suffix="/ 100" />
+              <Statistic
+                title="Credits Remaining"
+                value={
+                  analytics ? Math.floor(analytics.creditsRemaining / 1000) : 0
+                }
+                suffix={`/ 100`}
+              />
             </Card>
           </Col>
         </Row>
