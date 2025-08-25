@@ -4,10 +4,11 @@ import { defineConfig } from "wxt";
 export default defineConfig({
   modules: ["@wxt-dev/module-react"],
   manifest: {
-    permissions: ["identity", "storage", "microphone"],
+    permissions: ["identity", "storage", "microphone", "scripting", "tabs"],
     oauth2: {
       client_id: "6bj9qs4trivcf0h1u2kfnm4n1j.apps.googleusercontent.com", // if using Google directly
       scopes: ["openid", "email", "profile"],
     },
+    host_permissions: ["<all_urls>"], // 👈 allow all pages
   },
 });

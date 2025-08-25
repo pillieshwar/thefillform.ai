@@ -20,6 +20,7 @@ import { jwtDecode } from "jwt-decode";
 import { useEffect, useState } from "react";
 import { sampleData } from "../utils/testData";
 import VoiceRecorder from "./VoiceRecorder";
+import { extractForm } from "../utils/extractForm"; // ✅ utility function
 
 const { Title, Text } = Typography;
 const { Header, Content } = Layout;
@@ -37,6 +38,7 @@ interface LoginProps {
 const Login = ({ onOpenAccount }: LoginProps) => {
   const [user, setUser] = useState<any>(null);
   const [profile, setProfile] = useState<IdTokenPayload | null>(null);
+  const [formSchema, setFormSchema] = useState<any[]>([]);
 
   // Load saved tokens/profile
   useEffect(() => {
@@ -47,6 +49,38 @@ const Login = ({ onOpenAccount }: LoginProps) => {
       }
     });
   }, []);
+
+  // 🔹 Listener for schema messages
+  useEffect(() => {
+    const handleMessage = (msg: any) => {
+      if (msg.type === "FORM_SCHEMA") {
+        console.log("Schema received in popup:", msg.schema);
+        setFormSchema(msg.schema);
+      }
+    };
+
+    chrome.runtime.onMessage.addListener(handleMessage);
+    return () => chrome.runtime.onMessage.removeListener(handleMessage);
+  }, []);
+
+  const handleExtractForm = () => {
+    chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+      if (tabs[0].id) {
+        chrome.scripting.executeScript(
+          {
+            target: { tabId: tabs[0].id },
+            func: extractForm, // 👈 inject function directly
+          },
+          (results) => {
+            if (results && results[0].result) {
+              console.log("Extracted schema:", results[0].result);
+              setFormSchema(results[0].result); // ✅ update state
+            }
+          }
+        );
+      }
+    });
+  };
 
   const handleLogin = () => {
     chrome.runtime.sendMessage({ type: "LOGIN" }, (response) => {
@@ -87,6 +121,10 @@ const Login = ({ onOpenAccount }: LoginProps) => {
           console.error("No recorded audio found.");
           return;
         }
+        if (!formSchema || formSchema.length === 0) {
+          console.error("No form schema extracted.");
+          return;
+        }
         try {
           setLoading(true); // ⏳ disable + show spinner
           const res = await fetch(
@@ -99,11 +137,7 @@ const Login = ({ onOpenAccount }: LoginProps) => {
               },
               body: JSON.stringify({
                 audio: audioBase64, // 👈 send audio here
-                uiSchema: [
-                  { id: "name", type: "text", label: "Full Name" },
-                  { id: "email", type: "email", label: "Email" },
-                  { id: "password", type: "password", label: "Password" },
-                ],
+                uiSchema: formSchema,
               }),
             }
           );
@@ -230,7 +264,17 @@ const Login = ({ onOpenAccount }: LoginProps) => {
                 },
               ]}
             />
-
+            <Button
+              type="primary"
+              style={{
+                background: "#854ee0",
+                borderColor: "#854ee0",
+                marginTop: "1rem",
+              }}
+              onClick={handleExtractForm}
+            >
+              Extract Form Schema
+            </Button>
             <Divider />
             {/* Example API Call button */}
             <div style={{ marginTop: "1.5rem" }}>
@@ -249,20 +293,41 @@ const Login = ({ onOpenAccount }: LoginProps) => {
             </div>
           </>
         ) : (
-          <Button
-            type="primary"
-            icon={<GoogleOutlined />}
-            size="middle"
-            onClick={handleLogin}
-            style={{
-              background: "#854ee0",
-              borderColor: "#854ee0",
-              padding: "0 1.25rem",
-              fontWeight: 500,
-            }}
+          <div>
+            <Button
+              type="primary"
+              icon={<GoogleOutlined />}
+              size="middle"
+              onClick={handleLogin}
+              style={{
+                background: "#854ee0",
+                borderColor: "#854ee0",
+                padding: "0 1.25rem",
+                fontWeight: 500,
+              }}
+            >
+              Login with Google
+            </Button>
+            <Button
+              type="primary"
+              style={{
+                background: "#854ee0",
+                borderColor: "#854ee0",
+                marginTop: "1rem",
+              }}
+              onClick={handleExtractForm}
+            >
+              Extract Form Schema
+            </Button>
+          </div>
+        )}
+        {/* Show result (optional) */}
+        {formSchema.length > 0 && (
+          <pre
+            style={{ textAlign: "left", maxHeight: "150px", overflow: "auto" }}
           >
-            Login with Google
-          </Button>
+            {JSON.stringify(formSchema, null, 2)}
+          </pre>
         )}
       </Content>
     </Layout>
