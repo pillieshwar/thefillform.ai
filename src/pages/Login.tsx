@@ -21,6 +21,7 @@ import { useEffect, useState } from "react";
 import { sampleData } from "../utils/testData";
 import VoiceRecorder from "./VoiceRecorder";
 import { extractForm } from "../utils/extractForm"; // ✅ utility function
+import { populateForm } from "../utils/populateForm";
 
 const { Title, Text } = Typography;
 const { Header, Content } = Layout;
@@ -80,6 +81,8 @@ const Login = ({ onOpenAccount }: LoginProps) => {
         );
       }
     });
+
+    handleApiCall();
   };
 
   const handleLogin = () => {
@@ -106,10 +109,10 @@ const Login = ({ onOpenAccount }: LoginProps) => {
   };
   const [loading, setLoading] = useState(false);
 
-  const handleApiCall = async () => {
+  const handleApiCall = () => {
     (chrome || browser).storage.local.get(
       ["tokens", "recordedAudio"],
-      async (result) => {
+      (result) => {
         const tokens = result.tokens;
         const audioBase64 = result.recordedAudio;
 
@@ -121,33 +124,62 @@ const Login = ({ onOpenAccount }: LoginProps) => {
           console.error("No recorded audio found.");
           return;
         }
-        if (!formSchema || formSchema.length === 0) {
-          console.error("No form schema extracted.");
-          return;
-        }
-        try {
-          setLoading(true); // ⏳ disable + show spinner
-          const res = await fetch(
-            "https://980oelzvbi.execute-api.us-east-1.amazonaws.com/prod/voice",
+
+        chrome.tabs.query({ active: true, currentWindow: true }, (tabs) => {
+          if (!tabs[0]?.id) return;
+
+          // Step 1: extract form directly in the page
+          chrome.scripting.executeScript(
             {
-              method: "POST",
-              headers: {
-                "Content-Type": "application/json",
-                Authorization: `Bearer ${tokens.idToken}`,
-              },
-              body: JSON.stringify({
-                audio: audioBase64, // 👈 send audio here
-                uiSchema: formSchema,
-              }),
+              target: { tabId: tabs[0].id },
+              func: extractForm,
+            },
+            async (results) => {
+              const schema = results?.[0]?.result || [];
+              if (schema.length === 0) {
+                console.error("No form fields found");
+                return;
+              }
+
+              console.log("Extracted schema:", schema);
+              setFormSchema(schema); // optional, just for showing in popup
+
+              try {
+                setLoading(true);
+
+                // Step 2: call backend with schema + audio
+                const res = await fetch(
+                  "https://980oelzvbi.execute-api.us-east-1.amazonaws.com/prod/voice",
+                  {
+                    method: "POST",
+                    headers: {
+                      "Content-Type": "application/json",
+                      Authorization: `Bearer ${tokens.idToken}`,
+                    },
+                    body: JSON.stringify({
+                      audio: audioBase64,
+                      uiSchema: schema, // use fresh schema directly
+                    }),
+                  }
+                );
+
+                const data = await res.json();
+                console.log("API response:", data);
+
+                // Step 3: inject filled values into page
+                chrome.scripting.executeScript({
+                  target: { tabId: tabs[0].id! },
+                  func: populateForm,
+                  args: [data.filledFields],
+                });
+              } catch (err) {
+                console.error("API call failed:", err);
+              } finally {
+                setLoading(false);
+              }
             }
           );
-          const data = await res.json();
-          console.log("API response:", data);
-        } catch (err) {
-          console.error("API call failed:", err);
-        } finally {
-          setLoading(false); // ✅ re-enable when finished
-        }
+        });
       }
     );
   };
@@ -264,17 +296,6 @@ const Login = ({ onOpenAccount }: LoginProps) => {
                 },
               ]}
             />
-            <Button
-              type="primary"
-              style={{
-                background: "#854ee0",
-                borderColor: "#854ee0",
-                marginTop: "1rem",
-              }}
-              onClick={handleExtractForm}
-            >
-              Extract Form Schema
-            </Button>
             <Divider />
             {/* Example API Call button */}
             <div style={{ marginTop: "1.5rem" }}>
