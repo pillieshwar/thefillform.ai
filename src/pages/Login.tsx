@@ -144,14 +144,7 @@ const Login = ({ onOpenAccount }: LoginProps) => {
 
               try {
                 setLoading(true);
-                const cleanedSchema = formSchema.map((field) => {
-                  return Object.fromEntries(
-                    Object.entries(field).filter(
-                      ([_, value]) => value !== null && value !== ""
-                    )
-                  );
-                });
-                console.log("cleanedSchema:::", cleanedSchema);
+
                 // Step 2: call backend with schema + audio
                 const res = await fetch(
                   "https://980oelzvbi.execute-api.us-east-1.amazonaws.com/prod/voice",
@@ -163,7 +156,7 @@ const Login = ({ onOpenAccount }: LoginProps) => {
                     },
                     body: JSON.stringify({
                       audio: audioBase64,
-                      uiSchema: cleanedSchema, // use fresh schema directly
+                      uiSchema: formSchema, // use fresh schema directly
                     }),
                   }
                 );
